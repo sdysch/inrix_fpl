@@ -4,52 +4,64 @@ import plotly.express as px
 import os
 import datetime
 
-# Load data
+# FIXME make this configurable
 CSV_FILE = 'data/league_results.csv'
-df = pd.read_csv(CSV_FILE)
 
-# Get relative league rank
-df['league_rank'] = df.groupby('gameweek')['total_points'] \
-                      .rank(method='min', ascending=False) \
-                      .astype(int)
+# Load data
+@st.cache_data(ttl=3600) # every hour
+def load_data():
+    df = pd.read_csv(CSV_FILE)
 
-# Select managers
-managers = df['manager'].unique()
-selected_managers = st.sidebar.multiselect(
-    'Select Manager(s)',
-    managers,
-    default=managers
-)
-df_filtered = df[df['manager'].isin(selected_managers)]
+    # Get relative league rank
+    df['league_rank'] = df.groupby('gameweek')['total_points'] \
+                          .rank(method='min', ascending=False) \
+                          .astype(int)
+    return df
 
-# last updated timestamp
-mod_time = os.path.getmtime(CSV_FILE)
-last_updated = datetime.datetime.fromtimestamp(mod_time).strftime(
-    "%Y-%m-%d %H:%M:%S"
-)
+def main():
+    df = load_data()
 
-st.markdown(f"**Last updated:** {last_updated}")
+    # Select managers
+    managers = df['manager'].unique()
+    selected_managers = st.sidebar.multiselect(
+        'Select Manager(s)',
+        managers,
+        default=managers
+    )
+    df_filtered = df[df['manager'].isin(selected_managers)]
 
-# Rank progress over time
-st.subheader('League Rank Progress')
-fig_rank = px.line(
-    df_filtered,
-    x='gameweek',
-    y='league_rank',
-    color='manager',
-    markers=True,
-    title='League Rank Over Time'
-)
-fig_rank.update_layout(width=1000, height=600)
+    # last updated timestamp
+    mod_time = os.path.getmtime(CSV_FILE)
+    last_updated = datetime.datetime.fromtimestamp(mod_time).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
 
-# Plot rank 1 at top
-fig_rank.update_yaxes(autorange='reversed')
-st.plotly_chart(fig_rank)
+    st.markdown(f"**Last updated:** {last_updated}")
 
-# Latest table
-latest_gw = df['gameweek'].max()
-st.subheader(f'Latest Gameweek ({latest_gw}) Standings')
-latest_df = df[df['gameweek'] == latest_gw].sort_values('league_rank')
-st.dataframe(
-    latest_df[['manager', 'team', 'points', 'total_points', 'league_rank']]
-)
+    # Rank progress over time
+    st.subheader('League Rank Progress')
+    fig_rank = px.line(
+        df_filtered,
+        x='gameweek',
+        y='league_rank',
+        color='manager',
+        markers=True,
+        title='League Rank Over Time'
+    )
+    fig_rank.update_layout(width=1000, height=600)
+
+    # Plot rank 1 at top
+    fig_rank.update_yaxes(autorange='reversed')
+    st.plotly_chart(fig_rank)
+
+    # Latest table
+    latest_gw = df['gameweek'].max()
+    st.subheader(f'Latest Gameweek ({latest_gw}) Standings')
+    latest_df = df[df['gameweek'] == latest_gw].sort_values('league_rank')
+    st.dataframe(
+        latest_df[['manager', 'team', 'points', 'total_points', 'league_rank']]
+    )
+
+if __name__ == '__main__':
+    main()
+
