@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import os
+import datetime
 
 # Load data
 CSV_FILE = 'data/league_results.csv'
@@ -19,6 +21,14 @@ selected_managers = st.sidebar.multiselect(
     default=managers
 )
 df_filtered = df[df['manager'].isin(selected_managers)]
+
+# last updated timestamp
+mod_time = os.path.getmtime(CSV_FILE)
+last_updated = datetime.datetime.fromtimestamp(mod_time).strftime(
+    "%Y-%m-%d %H:%M:%S"
+)
+
+st.markdown(f"**Last updated:** {last_updated}")
 
 # Rank progress over time
 st.subheader('League Rank Progress')
