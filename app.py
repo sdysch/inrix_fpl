@@ -39,35 +39,56 @@ def main():
         "%Y-%m-%d %H:%M:%S"
     )
 
+    st.title('Fantasy Football League Tracker')
     st.markdown(f"**Last updated:** {last_updated}")
 
     # Rank progress over time
     latest_ranks = df_filtered.sort_values('gameweek').groupby('manager')['league_rank'].last().sort_values(ascending=True)
     order = latest_ranks.index.tolist()
 
-    st.subheader('League Rank Progress')
-    fig_rank = px.line(
-        df_filtered,
-        x='gameweek',
-        y='league_rank',
-        color='manager',
-        markers=True,
-        title='League Rank Over Time',
-        color_discrete_sequence=px.colors.qualitative.Light24,
-        category_orders={'manager': order}
-    )
-    fig_rank.update_layout(width=1000, height=600)
+    # common colour mapping
+    colours = px.colors.qualitative.Light24
+    manager_colours = {manager: colours[i % len(colours)] for i, manager in enumerate(order)}
 
-    # Plot rank 1 at top
-    fig_rank.update_yaxes(autorange='reversed')
-    st.plotly_chart(fig_rank)
+    # Plot selection
+    plot_choice = st.radio('Choose plot', ['League Rank Over Time', 'Total Points Over Time'])
+
+    if plot_choice == 'League Rank Over Time':
+        fig = px.line(
+            df_filtered,
+            x='gameweek',
+            y='league_rank',
+            color='manager',
+            markers=True,
+            hover_data=['team', 'manager'],
+            title='League Rank Over Time',
+            color_discrete_map=manager_colours,
+            category_orders={'manager': order}
+        )
+        fig.update_yaxes(autorange='reversed')
+        st.plotly_chart(fig, use_container_width=True)
+
+    else:
+        fig = px.line(
+            df_filtered,
+            x='gameweek',
+            y='total_points',
+            color='manager',
+            markers=True,
+            hover_data=['team', 'manager'],
+            title='Total Points Over Time',
+            color_discrete_map=manager_colours,
+            category_orders={'manager': order}
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
     # Latest table
     latest_gw = df['gameweek'].max()
     st.subheader(f'Latest Gameweek ({latest_gw}) Standings')
-    latest_df = df[df['gameweek'] == latest_gw].sort_values('league_rank')
+    latest_df = df[df['gameweek'] == latest_gw].sort_values('league_rank').reset_index()
+    latest_df.index = latest_df['league_rank']
     st.dataframe(
-        latest_df[['manager', 'team', 'points', 'total_points', 'league_rank']]
+        latest_df[['manager', 'team', 'total_points']]
     )
 
 if __name__ == '__main__':
