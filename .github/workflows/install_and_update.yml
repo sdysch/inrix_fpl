@@ -2,7 +2,7 @@ name: Update Data
 
 on:
   schedule:
-    - cron: "0 22 * * *"  # every day at 22:00
+    - cron: '0 22 * * *'  # every day at 22:00
   workflow_dispatch:
 
 jobs:
@@ -11,14 +11,14 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.12
+          python-version: '3.12'
 
       - name: Install dependencies
         run: |
@@ -30,13 +30,14 @@ jobs:
 
       - name: Commit changes if CSV updated
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
           git add data/league_results.csv
           if ! git diff --cached --quiet; then
             TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
             git commit -m "Update league_results.csv at $TIMESTAMP"
-            git push
+            git push origin HEAD:${GITHUB_REF#refs/heads/}
           else
             echo "No changes to commit"
           fi
+
