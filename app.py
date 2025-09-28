@@ -16,6 +16,9 @@ def load_data():
     df['league_rank'] = df.groupby('gameweek')['total_points'] \
                           .rank(method='min', ascending=False) \
                           .astype(int)
+
+    df = df.sort_values(['manager', 'gameweek'])
+
     return df
 
 def main():
@@ -46,7 +49,8 @@ def main():
         y='league_rank',
         color='manager',
         markers=True,
-        title='League Rank Over Time'
+        title='League Rank Over Time',
+        color_discrete_sequence=px.colors.qualitative.Light24
     )
     fig_rank.update_layout(width=1000, height=600)
 
