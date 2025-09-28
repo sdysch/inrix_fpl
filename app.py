@@ -42,6 +42,9 @@ def main():
     st.markdown(f"**Last updated:** {last_updated}")
 
     # Rank progress over time
+    latest_ranks = df_filtered.sort_values('gameweek').groupby('manager')['league_rank'].last().sort_values(ascending=True)
+    order = latest_ranks.index.tolist()
+
     st.subheader('League Rank Progress')
     fig_rank = px.line(
         df_filtered,
@@ -50,7 +53,8 @@ def main():
         color='manager',
         markers=True,
         title='League Rank Over Time',
-        color_discrete_sequence=px.colors.qualitative.Light24
+        color_discrete_sequence=px.colors.qualitative.Light24,
+        category_orders={'manager': order}
     )
     fig_rank.update_layout(width=1000, height=600)
 
